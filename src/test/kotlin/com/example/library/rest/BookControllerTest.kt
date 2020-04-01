@@ -11,12 +11,13 @@ class BookControllerTest: BaseControllerTest() {
 
     @Test
     fun `should create book`() {
+        val bookRequest = buildBookRequest()
         mockMvc.perform(post("/books")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString((buildBookRequest()))))
+                    .content(objectMapper.writeValueAsString((bookRequest))))
                 .andExpect(status().isCreated)
-                .andExpect(jsonPath("title").value(BOOK_TITLE))
-                .andExpect(jsonPath("author").value(BOOK_AUTHOR))
+                .andExpect(jsonPath("title").value(bookRequest.title))
+                .andExpect(jsonPath("author").value(bookRequest.author))
                 .andExpect(jsonPath("id").isNotEmpty)
     }
 

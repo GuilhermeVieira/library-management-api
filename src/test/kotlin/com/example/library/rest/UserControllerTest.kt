@@ -1,6 +1,5 @@
 package com.example.library.rest
 
-import com.example.library.rest.exchange.UserExchange
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -12,12 +11,13 @@ class UserControllerTest: BaseControllerTest() {
 
     @Test
     fun `should create user`() {
+        val userRequest = buildUserRequest()
         mockMvc.perform(post("/users")
                     .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(buildUserRequest())))
+                    .content(objectMapper.writeValueAsString(userRequest)))
                 .andExpect(status().isCreated)
-                .andExpect(jsonPath("name").value(USER_NAME))
-                .andExpect(jsonPath("document_id").value(USER_DOCUMENT_ID))
+                .andExpect(jsonPath("name").value(userRequest.name))
+                .andExpect(jsonPath("document_id").value(userRequest.documentId))
                 .andExpect(jsonPath("id").isNotEmpty)
     }
 

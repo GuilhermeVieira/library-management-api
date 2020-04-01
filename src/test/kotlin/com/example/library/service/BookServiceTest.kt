@@ -16,11 +16,12 @@ class BookServiceTest: ShouldSpec() {
 
     private val bookService = BookService(bookRepository)
 
-    private fun buildBook(available: Boolean = true) = Book(
-            title = "Clean Code",
-            author = "Uncle Bob",
-            available = available
-    )
+    private fun buildBook(available: Boolean = true) =
+            Book(
+                    title = "Clean Code",
+                    author = "Uncle Bob",
+                    available = available
+            )
 
     init {
         should("create book") {

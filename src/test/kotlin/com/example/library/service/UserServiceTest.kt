@@ -22,13 +22,6 @@ class UserServiceTest: ShouldSpec() {
             documentId = "7896321"
     )
 
-    private fun buildUser(): User =
-            User(
-                    name = "Bob",
-                    documentId = "7896321",
-                    loans = mutableSetOf()
-            )
-
     init {
         should("create user") {
             every { userRepository.findByDocumentId(user.documentId) } returns null

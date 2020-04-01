@@ -28,7 +28,8 @@ class LoanServiceTest: ShouldSpec() {
                 loanRepository = loanRepository,
                 userService = userService,
                 bookService = bookService),
-            recordPrivateCalls = true)
+            recordPrivateCalls = true
+    )
 
     private val user = User(
             name = "Bob",
