@@ -14,9 +14,7 @@ class LoanService(val loanRepository: LoanRepository,
                   val bookService: BookService
 ) {
 
-    private fun canLoanBook(userId: String): Boolean {
-        return userService.canLoanBook(userId)
-    }
+    private fun canLoanBook(userId: String) = userService.canLoanBook(userId)
 
     private fun validateUserLoan(userId: String) {
         if (!canLoanBook(userId)) {
@@ -35,15 +33,14 @@ class LoanService(val loanRepository: LoanRepository,
         validateBookLoan(bookId)
     }
 
-    fun createLoanEntity(userId: String, bookId: String): Loan {
-        return Loan(
+    fun createLoanEntity(userId: String, bookId: String) =
+        Loan(
                 user = userService.findById(userId),
                 book = bookService.findById(bookId),
                 issuedDate = LocalDate.now(),
                 loanedUntil = LocalDate.now(),
                 returnedDate = null
         )
-    }
 
     fun create(userId: String, bookId: String): Loan {
         validateLoan(userId, bookId)

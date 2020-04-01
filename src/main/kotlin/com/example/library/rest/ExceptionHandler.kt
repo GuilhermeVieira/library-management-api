@@ -3,7 +3,6 @@ package com.example.library.rest
 import com.example.library.exception.BadRequestException
 import com.example.library.exception.NotFoundException
 import org.slf4j.LoggerFactory
-import org.springframework.context.MessageSource
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
@@ -11,7 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import javax.servlet.http.HttpServletRequest
 
 @ControllerAdvice
-class ExceptionHandler(val messageSource: MessageSource) {
+class ExceptionHandler {
 
     private val logger = LoggerFactory.getLogger(com.example.library.rest.ExceptionHandler::class.java)
 

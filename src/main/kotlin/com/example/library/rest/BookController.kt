@@ -13,13 +13,11 @@ class BookController(val bookService: BookService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody book: BookExchange): BookExchange {
-        return bookService.create(book.toDomain()).toBookExchange()
-    }
+    fun create(@RequestBody book: BookExchange) =
+        bookService.create(book.toDomain()).toBookExchange()
 
     @GetMapping("/{id}")
-    fun findBook(@PathVariable id: String): BookExchange {
-        return bookService.findById(id).toBookExchange()
-    }
+    fun findBook(@PathVariable id: String) =
+        bookService.findById(id).toBookExchange()
 
 }

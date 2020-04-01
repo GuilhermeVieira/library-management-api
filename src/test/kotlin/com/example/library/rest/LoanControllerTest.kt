@@ -15,8 +15,8 @@ class LoanControllerTest: BaseControllerTest() {
         val bookResponse = createBook()
 
         mockMvc.perform(post("/loans")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(buildLoanRequest(userResponse.id!!, bookResponse.id!!))))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(buildLoanRequest(userResponse.id!!, bookResponse.id!!))))
                 .andExpect(status().isCreated)
                 .andExpect(jsonPath("user_id").value(userResponse.id!!))
                 .andExpect(jsonPath("book_id").value(bookResponse.id!!))

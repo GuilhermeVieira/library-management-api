@@ -12,8 +12,7 @@ class LoanController(val loanService: LoanService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody loan: LoanExchange): LoanExchange {
-        return loanService.create(loan.userId, loan.bookId).toLoanExchange()
-    }
+    fun create(@RequestBody loan: LoanExchange) =
+        loanService.create(loan.userId, loan.bookId).toLoanExchange()
 
 }

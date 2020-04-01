@@ -8,37 +8,26 @@ import com.example.library.repository.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
-const val USER_LOAN_LIMIT = 10
-
 @Service
 class UserService(val userRepository: UserRepository) {
 
+    val userLoanLimit = 10
 
-    private fun documentIdExists(documentId: String): Boolean {
-        if (userRepository.findByDocumentId(documentId) == null) {
-            return false
-        }
-        return true
-    }
+    private fun userExists(user: User) =
+            userRepository.findByDocumentId(user.documentId) == null
 
-    fun create(user: User): User {
-        if (documentIdExists(user.documentId)) {
-            throw UserAlreadyExistsException(ErrorCode.USER_ALREADY_EXISTS)
-        }
-        return userRepository.save(user)
-    }
+    fun create(user: User) =
+        takeIf {
+            userExists(user)
+        }?.let {
+            userRepository.save(user)
+        } ?: throw UserAlreadyExistsException(ErrorCode.USER_ALREADY_EXISTS)
 
     fun findById(id: String) = userRepository.findByIdOrNull(id)
             ?: throw UserNotFoundException(ErrorCode.USER_NOT_FOUND)
 
-    // Untested
-    fun getUserLoansSize(id: String): Int = findById(id).loans.size
+    fun getUserLoansSize(id: String) = findById(id).loans.size
 
-    fun canLoanBook(id: String): Boolean {
-        if (getUserLoansSize(id) < USER_LOAN_LIMIT) {
-            return true
-        }
-        return false
-    }
+    fun canLoanBook(id: String) = getUserLoansSize(id) < userLoanLimit
 
 }

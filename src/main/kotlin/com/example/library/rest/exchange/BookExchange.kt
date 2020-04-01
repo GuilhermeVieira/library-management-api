@@ -8,10 +8,6 @@ data class BookExchange(
         val author: String
 )
 
-fun BookExchange.toDomain(): Book {
-    return Book(title = title, author = author)
-}
+fun BookExchange.toDomain() = Book(title = title, author = author)
 
-fun Book.toBookExchange(): BookExchange {
-    return BookExchange(id = id, title = title, author = author)
-}
+fun Book.toBookExchange() = BookExchange(id = id, title = title, author = author)

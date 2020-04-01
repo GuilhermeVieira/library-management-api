@@ -13,13 +13,11 @@ class UserController(val userService: UserService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    fun create(@RequestBody user: UserExchange): UserExchange {
-        return userService.create(user.toDomain()).toUserExchange()
-    }
+    fun create(@RequestBody user: UserExchange) =
+            userService.create(user.toDomain()).toUserExchange()
 
     @GetMapping("/{id}")
-    fun findUser(@PathVariable id: String): UserExchange {
-        return userService.findById(id).toUserExchange()
-    }
+    fun findUser(@PathVariable id: String) =
+            userService.findById(id).toUserExchange()
 
 }
