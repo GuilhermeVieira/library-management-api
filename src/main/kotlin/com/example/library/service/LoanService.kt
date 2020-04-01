@@ -2,7 +2,6 @@ package com.example.library.service
 
 import com.example.library.domain.Loan
 import com.example.library.exception.BookIsNotAvailableException
-import com.example.library.exception.ErrorCode
 import com.example.library.exception.UserReachedLoanLimitException
 import com.example.library.repository.LoanRepository
 import org.springframework.stereotype.Service
@@ -18,13 +17,13 @@ class LoanService(val loanRepository: LoanRepository,
 
     private fun validateUserLoan(userId: String) {
         if (!canLoanBook(userId)) {
-            throw UserReachedLoanLimitException(ErrorCode.USER_REACHED_LOAN_LIMIT)
+            throw UserReachedLoanLimitException()
         }
     }
 
     private fun validateBookLoan(bookId: String) {
         if (!bookService.isAvailable(bookId)) {
-            throw BookIsNotAvailableException(ErrorCode.BOOK_IS_ALREADY_BORROWED)
+            throw BookIsNotAvailableException()
         }
     }
 

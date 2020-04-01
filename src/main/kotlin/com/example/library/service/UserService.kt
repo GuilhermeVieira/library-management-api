@@ -1,7 +1,6 @@
 package com.example.library.service
 
 import com.example.library.domain.User
-import com.example.library.exception.ErrorCode
 import com.example.library.exception.UserAlreadyExistsException
 import com.example.library.exception.UserNotFoundException
 import com.example.library.repository.UserRepository
@@ -21,10 +20,10 @@ class UserService(val userRepository: UserRepository) {
             userExists(user)
         }?.let {
             userRepository.save(user)
-        } ?: throw UserAlreadyExistsException(ErrorCode.USER_ALREADY_EXISTS)
+        } ?: throw UserAlreadyExistsException()
 
     fun findById(id: String) = userRepository.findByIdOrNull(id)
-            ?: throw UserNotFoundException(ErrorCode.USER_NOT_FOUND)
+            ?: throw UserNotFoundException()
 
     fun getUserLoansSize(id: String) = findById(id).loans.size
 
