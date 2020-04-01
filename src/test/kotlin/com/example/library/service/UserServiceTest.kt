@@ -1,6 +1,5 @@
 package com.example.library.service
 
-import com.example.library.config.ApplicationConfiguration
 import com.example.library.domain.User
 import com.example.library.exception.UserAlreadyExistsException
 import com.example.library.exception.UserNotFoundException
@@ -61,7 +60,7 @@ class UserServiceTest: ShouldSpec() {
         }
 
         should("return true because user has not reached the loan limit") {
-            every { userService.getUserLoansSize(user.id) } returns ApplicationConfiguration.USER_LOAN_LIMIT - 1
+            every { userService.getUserLoansSize(user.id) } returns USER_LOAN_LIMIT - 1
 
             val result = userService.canLoanBook(user.id)
 
@@ -69,7 +68,7 @@ class UserServiceTest: ShouldSpec() {
         }
 
         should("return false because user has reached the loan limit") {
-            every { userService.getUserLoansSize(user.id) } returns ApplicationConfiguration.USER_LOAN_LIMIT
+            every { userService.getUserLoansSize(user.id) } returns USER_LOAN_LIMIT
 
             val result = userService.canLoanBook(user.id)
 
