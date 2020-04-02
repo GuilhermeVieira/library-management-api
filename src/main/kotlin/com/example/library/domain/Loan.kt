@@ -14,5 +14,5 @@ data class Loan(
         val book: Book,
         val issuedDate: LocalDate,
         val loanedUntil: LocalDate,
-        val returnedDate: LocalDate?
+        var returnedDate: LocalDate?
 )

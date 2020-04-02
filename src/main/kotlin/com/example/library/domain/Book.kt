@@ -12,6 +12,5 @@ data class Book(
         val title: String,
         val author: String,
         @OneToMany(mappedBy = "book")
-        val loans: MutableList<Loan> = mutableListOf(),
-        val available: Boolean = true
+        val loans: MutableList<Loan> = mutableListOf()
 )

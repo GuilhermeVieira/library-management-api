@@ -15,4 +15,8 @@ class LoanController(val loanService: LoanService) {
     fun create(@RequestBody loan: LoanExchange) =
         loanService.create(loan.userId, loan.bookId).toLoanExchange()
 
+    @PostMapping("/{bookId}")
+    fun create(@PathVariable bookId: String) =
+            loanService.returnBook(bookId).toLoanExchange()
+
 }

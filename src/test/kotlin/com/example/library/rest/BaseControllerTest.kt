@@ -86,4 +86,12 @@ abstract class BaseControllerTest {
                     .content(objectMapper.writeValueAsString(buildBookRequest())))
                 .andReturn().response.contentAsString, BookExchange::class.java)
     }
+
+    fun createLoan(userId: String, bookId: String): LoanExchange {
+        return objectMapper.readValue(mockMvc.perform(post("/loans")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(buildLoanRequest(userId, bookId))))
+                .andReturn().response.contentAsString, LoanExchange::class.java)
+    }
+
 }

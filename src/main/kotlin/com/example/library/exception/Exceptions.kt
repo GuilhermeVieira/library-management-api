@@ -12,6 +12,8 @@ class BookNotFoundException(override val message: String = ErrorCode.BOOK_NOT_FO
 
 class BookIsNotAvailableException(override val message: String = ErrorCode.BOOK_IS_ALREADY_BORROWED): BadRequestException()
 
+class BookIsNotBorrowedException(override val message: String = ErrorCode.BOOK_IS_NOT_BORROWED): BadRequestException()
+
 open class BadRequestException: RuntimeException()
 
 open class NotFoundException: RuntimeException()
@@ -22,4 +24,5 @@ object ErrorCode {
     const val BOOK_NOT_FOUND = "Book not found"
     const val USER_REACHED_LOAN_LIMIT = "User has reached the limit of loans"
     const val BOOK_IS_ALREADY_BORROWED = "Book is already borrowed"
+    const val BOOK_IS_NOT_BORROWED = "Book is not currently borrowed"
 }

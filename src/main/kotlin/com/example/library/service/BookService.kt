@@ -14,6 +14,4 @@ class BookService(val bookRepository: BookRepository) {
     fun findById(id: String) = bookRepository.findByIdOrNull(id)
             ?: throw BookNotFoundException()
 
-    fun isAvailable(id: String) = findById(id).available
-
 }

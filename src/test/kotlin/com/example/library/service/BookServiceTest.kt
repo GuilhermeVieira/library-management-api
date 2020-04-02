@@ -16,11 +16,10 @@ class BookServiceTest: ShouldSpec() {
 
     private val bookService = BookService(bookRepository)
 
-    private fun buildBook(available: Boolean = true) =
+    private fun buildBook() =
             Book(
                     title = "Clean Code",
-                    author = "Uncle Bob",
-                    available = available
+                    author = "Uncle Bob"
             )
 
     init {
@@ -48,24 +47,6 @@ class BookServiceTest: ShouldSpec() {
             every { bookRepository.findByIdOrNull(book.id) } returns null
 
             shouldThrow<BookNotFoundException> { bookService.findById(book.id) }
-        }
-
-        should("return true because book is not currently borrowed") {
-            val book = buildBook()
-            every { bookService.findById(book.id) } returns book
-
-            val result = bookService.isAvailable(book.id)
-
-            result shouldBe true
-        }
-
-        should("return false because book is currently borrowed") {
-            val book = buildBook(false)
-            every { bookService.findById(book.id) } returns book
-
-            val result = bookService.isAvailable(book.id)
-
-            result shouldBe false
         }
     }
 }

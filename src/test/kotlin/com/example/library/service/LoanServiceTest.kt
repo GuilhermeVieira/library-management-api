@@ -4,6 +4,7 @@ import com.example.library.domain.Book
 import com.example.library.domain.Loan
 import com.example.library.domain.User
 import com.example.library.exception.BookIsNotAvailableException
+import com.example.library.exception.BookIsNotBorrowedException
 import com.example.library.exception.UserReachedLoanLimitException
 import com.example.library.repository.LoanRepository
 import io.kotlintest.assertSoftly
@@ -50,6 +51,46 @@ class LoanServiceTest: ShouldSpec() {
     )
 
     init {
+        should("get book loans") {
+            every { bookService.findById(book.id) } returns book
+
+            val result = loanService.findBookLoans(book.id)
+
+            result shouldBe book.loans
+        }
+
+        should("return the current loan") {
+            every { loanService.findBookLoans(book.id) } returns mutableListOf(loan)
+
+            val result = loanService.findBookCurrentLoan(book.id)
+
+            result shouldBe loan
+        }
+
+        should("return null because book is not currently loaned") {
+            every { loanService.findBookLoans(book.id) } returns mutableListOf()
+
+            val result = loanService.findBookCurrentLoan(book.id)
+
+            result shouldBe null
+        }
+
+        should("return true because book is available") {
+            every { loanService.findBookCurrentLoan(book.id) } returns null
+
+            val result = loanService.isBookAvailable(book.id)
+
+            result shouldBe true
+        }
+
+        should("return false because book is currently borrowed") {
+            every { loanService.findBookCurrentLoan(book.id) } returns loan
+
+            val result = loanService.isBookAvailable(book.id)
+
+            result shouldBe false
+        }
+
         should("create loan entity") {
             every { userService.findById(user.id) } returns user
             every { bookService.findById(book.id) } returns book
@@ -68,13 +109,14 @@ class LoanServiceTest: ShouldSpec() {
 
         should("create loan") {
             every { userService.canLoanBook(user.id) } returns true
-            every { bookService.isAvailable(book.id) } returns true
+            every { loanService["isBookAvailable"](book.id) } returns true
             every { loanService["createLoanEntity"](user.id, book.id) } returns loan
             every { loanRepository.save(loan) } returns loan
 
             val result = loanService.create(user.id, book.id)
 
             result shouldBe loan
+            //book.available shouldBe false
         }
 
         should("not create loan because of limit of loans") {
@@ -85,9 +127,24 @@ class LoanServiceTest: ShouldSpec() {
 
         should("not loan book because it is already borrowed") {
             every { userService.canLoanBook(user.id) } returns true
-            every { bookService.isAvailable(book.id) } returns false
+            every { loanService["isBookAvailable"](book.id) } returns false
 
             shouldThrow<BookIsNotAvailableException> { loanService.create(user.id, book.id) }
+        }
+
+        should("return book") {
+            every { loanService.findBookCurrentLoan(book.id) } returns loan
+            every { loanRepository.save(loan) } returns loan
+
+            val result = loanService.returnBook(book.id)
+
+            result.returnedDate shouldBe LocalDate.now()
+        }
+
+        should("not return book because it is already returned") {
+            every { loanService.findBookCurrentLoan(book.id) } returns null
+
+            shouldThrow<BookIsNotBorrowedException> { loanService.returnBook(book.id) }
         }
     }
 }
