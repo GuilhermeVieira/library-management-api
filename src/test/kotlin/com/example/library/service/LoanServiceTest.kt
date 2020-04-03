@@ -1,8 +1,6 @@
 package com.example.library.service
 
-import com.example.library.domain.Book
-import com.example.library.domain.Loan
-import com.example.library.domain.User
+import com.example.library.domain.*
 import com.example.library.exception.BookIsNotAvailableException
 import com.example.library.exception.BookIsNotBorrowedException
 import com.example.library.exception.UserReachedLoanLimitException
@@ -102,7 +100,7 @@ class LoanServiceTest: ShouldSpec() {
                 result.user shouldBe user
                 result.book shouldBe book
                 result.issuedDate shouldBe todaysDate
-                result.loanedUntil shouldBe todaysDate
+                result.loanedUntil shouldBe todaysDate.plusDays(loanService.loanPeriod.toLong())
                 result.returnedDate shouldBe null
             }
         }
@@ -116,7 +114,6 @@ class LoanServiceTest: ShouldSpec() {
             val result = loanService.create(user.id, book.id)
 
             result shouldBe loan
-            //book.available shouldBe false
         }
 
         should("not create loan because of limit of loans") {
@@ -132,19 +129,69 @@ class LoanServiceTest: ShouldSpec() {
             shouldThrow<BookIsNotAvailableException> { loanService.create(user.id, book.id) }
         }
 
-        should("return book") {
+        should("return book with no fine") {
             every { loanService.findBookCurrentLoan(book.id) } returns loan
             every { loanRepository.save(loan) } returns loan
 
             val result = loanService.returnBook(book.id)
 
             result.returnedDate shouldBe LocalDate.now()
+            result.fine.fineValue shouldBe 0.0
+            result.fine.fineStatus shouldBe FineStatus.NOT_CHARGED
         }
 
         should("not return book because it is already returned") {
             every { loanService.findBookCurrentLoan(book.id) } returns null
 
             shouldThrow<BookIsNotBorrowedException> { loanService.returnBook(book.id) }
+        }
+
+        should("return book with fine") {
+            val fine = Fine()
+            fine.fineValue = 2.0
+            fine.fineStatus = FineStatus.OPENED
+            every { loanService.findBookCurrentLoan(book.id) } returns loan
+            every { loanService.computeFine(loan) } returns fine
+            every { loanRepository.save(loan) } returns loan
+
+            val result = loanService.returnBook(book.id)
+
+            result.returnedDate shouldBe LocalDate.now()
+            result.fine.fineValue shouldBe 2.0
+            result.fine.fineStatus shouldBe FineStatus.OPENED
+        }
+
+        should("return 0.0 as fine because user delivered book before the due date") {
+            val onTimeLoan = mockk<Loan>()
+            every { onTimeLoan.loanedUntil } returns LocalDate.now().plusDays(1)
+
+            val result = loanService.computeFine(onTimeLoan)
+
+            result.fineValue shouldBe 0.0
+            result.fineStatus shouldBe FineStatus.NOT_CHARGED
+        }
+
+        should("return 0.0 as fine because user delivered book in the loanedUntil date") {
+            val onTimeLoan = mockk<Loan>()
+            every { onTimeLoan.loanedUntil } returns LocalDate.now()
+
+            val result = loanService.computeFine(onTimeLoan)
+
+            result.fineValue shouldBe 0.0
+            result.fineStatus shouldBe FineStatus.NOT_CHARGED
+        }
+
+        should("return a fine because user delayed one day") {
+            val onTimeLoan = mockk<Loan>()
+
+            for (delayedDays in 1..60) {
+                every { onTimeLoan.loanedUntil } returns LocalDate.now().minusDays(delayedDays.toLong())
+
+                val result = loanService.computeFine(onTimeLoan)
+
+                result.fineValue shouldBe delayedDays * loanService.finePerDay
+                result.fineStatus shouldBe FineStatus.OPENED
+            }
         }
     }
 }

@@ -94,4 +94,9 @@ abstract class BaseControllerTest {
                 .andReturn().response.contentAsString, LoanExchange::class.java)
     }
 
+    fun returnBook(bookId: String) {
+        mockMvc.perform(post("/loans/${bookId}")
+                .contentType(MediaType.APPLICATION_JSON))
+    }
+
 }
