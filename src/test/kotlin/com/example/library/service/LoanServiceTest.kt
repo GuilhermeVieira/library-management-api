@@ -11,6 +11,7 @@ import io.kotlintest.shouldThrow
 import io.kotlintest.specs.ShouldSpec
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.mockkObject
 import io.mockk.spyk
 import java.time.LocalDate
 
@@ -44,7 +45,7 @@ class LoanServiceTest: ShouldSpec() {
             user = user,
             book = book,
             issuedDate = LocalDate.now(),
-            loanedUntil = LocalDate.now(),
+            dueDate = LocalDate.now(),
             returnedDate = null
     )
 
@@ -100,7 +101,7 @@ class LoanServiceTest: ShouldSpec() {
                 result.user shouldBe user
                 result.book shouldBe book
                 result.issuedDate shouldBe todaysDate
-                result.loanedUntil shouldBe todaysDate.plusDays(loanService.loanPeriod.toLong())
+                result.dueDate shouldBe todaysDate.plusDays(loanService.loanPeriod.toLong())
                 result.returnedDate shouldBe null
             }
         }
@@ -136,8 +137,7 @@ class LoanServiceTest: ShouldSpec() {
             val result = loanService.returnBook(book.id)
 
             result.returnedDate shouldBe LocalDate.now()
-            result.fine.fineValue shouldBe 0.0
-            result.fine.fineStatus shouldBe FineStatus.NOT_CHARGED
+            result.fine shouldBe null
         }
 
         should("not return book because it is already returned") {
@@ -147,9 +147,7 @@ class LoanServiceTest: ShouldSpec() {
         }
 
         should("return book with fine") {
-            val fine = Fine()
-            fine.fineValue = 2.0
-            fine.fineStatus = FineStatus.OPENED
+            val fine = Fine(2.0, FineStatus.OPENED)
             every { loanService.findBookCurrentLoan(book.id) } returns loan
             every { loanService.computeFine(loan) } returns fine
             every { loanRepository.save(loan) } returns loan
@@ -157,41 +155,50 @@ class LoanServiceTest: ShouldSpec() {
             val result = loanService.returnBook(book.id)
 
             result.returnedDate shouldBe LocalDate.now()
-            result.fine.fineValue shouldBe 2.0
-            result.fine.fineStatus shouldBe FineStatus.OPENED
+            result.fine?.value shouldBe 2.0
+            result.fine?.status shouldBe FineStatus.OPENED
         }
 
         should("return 0.0 as fine because user delivered book before the due date") {
             val onTimeLoan = mockk<Loan>()
-            every { onTimeLoan.loanedUntil } returns LocalDate.now().plusDays(1)
+            every { onTimeLoan.dueDate } returns LocalDate.now().plusDays(1)
 
             val result = loanService.computeFine(onTimeLoan)
 
-            result.fineValue shouldBe 0.0
-            result.fineStatus shouldBe FineStatus.NOT_CHARGED
+            result shouldBe null
         }
 
         should("return 0.0 as fine because user delivered book in the loanedUntil date") {
             val onTimeLoan = mockk<Loan>()
-            every { onTimeLoan.loanedUntil } returns LocalDate.now()
+            every { onTimeLoan.dueDate } returns LocalDate.now()
 
             val result = loanService.computeFine(onTimeLoan)
 
-            result.fineValue shouldBe 0.0
-            result.fineStatus shouldBe FineStatus.NOT_CHARGED
+            result shouldBe null
         }
 
         should("return a fine because user delayed one day") {
             val onTimeLoan = mockk<Loan>()
 
             for (delayedDays in 1..60) {
-                every { onTimeLoan.loanedUntil } returns LocalDate.now().minusDays(delayedDays.toLong())
+                every { onTimeLoan.dueDate } returns LocalDate.now().minusDays(delayedDays.toLong())
 
                 val result = loanService.computeFine(onTimeLoan)
 
-                result.fineValue shouldBe delayedDays * loanService.finePerDay
-                result.fineStatus shouldBe FineStatus.OPENED
+                result?.value shouldBe delayedDays * loanService.finePerDay
+                result?.status shouldBe FineStatus.OPENED
             }
         }
+
+        should("return user loans") {
+            mockkObject(user)
+            every { userService.findById(user.id) } returns user
+            every { user.loans } returns mutableListOf(loan)
+
+            val result = loanService.findUserLoans(user.id)
+
+            result shouldBe mutableListOf(loan)
+        }
+
     }
 }

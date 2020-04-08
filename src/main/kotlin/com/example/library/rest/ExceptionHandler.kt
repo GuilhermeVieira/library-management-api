@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
+import java.lang.RuntimeException
 import javax.servlet.http.HttpServletRequest
 
 @ControllerAdvice
@@ -15,18 +16,14 @@ class ExceptionHandler {
     private val logger = LoggerFactory.getLogger(com.example.library.rest.ExceptionHandler::class.java)
 
     @ExceptionHandler(BadRequestException::class)
-    fun handleBadRequestException(exception: BadRequestException, request: HttpServletRequest): ResponseEntity<String> {
-        val status = HttpStatus.BAD_REQUEST
-        logException(exception, status, request)
-        return buildResponse(
-                status,
-                exception.message
-        )
-    }
+    fun handleBadRequestException(exception: BadRequestException, request: HttpServletRequest) =
+            handleGenericException(exception, request, HttpStatus.BAD_REQUEST)
 
     @ExceptionHandler(NotFoundException::class)
-    fun handleNotFoundException(exception: NotFoundException, request: HttpServletRequest): ResponseEntity<String> {
-        val status = HttpStatus.NOT_FOUND
+    fun handleNotFoundException(exception: NotFoundException, request: HttpServletRequest) =
+            handleGenericException(exception, request, HttpStatus.NOT_FOUND)
+
+    private fun handleGenericException(exception: RuntimeException, request: HttpServletRequest, status: HttpStatus): ResponseEntity<String> {
         logException(exception, status, request)
         return buildResponse(
                 status,

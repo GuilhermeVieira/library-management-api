@@ -1,7 +1,6 @@
 package com.example.library.rest.exchange
 
 import com.example.library.domain.Fine
-import com.example.library.domain.FineStatus
 import com.example.library.domain.Loan
 import java.time.LocalDate
 
@@ -10,9 +9,9 @@ data class LoanExchange (
         val userId: String,
         val bookId: String,
         var issuedDate: LocalDate? = null,
-        var loanedUntil: LocalDate? = null,
+        var dueDate: LocalDate? = null,
         var returnedDate: LocalDate? = null,
-        var fine: Fine = Fine()
+        var fine: Fine? = null
 )
 
 fun Loan.toLoanExchange() =
@@ -21,7 +20,9 @@ fun Loan.toLoanExchange() =
                 userId = user.id,
                 bookId = book.id,
                 issuedDate = issuedDate,
-                loanedUntil = loanedUntil,
+                dueDate = dueDate,
                 returnedDate = returnedDate,
                 fine = fine
         )
+
+fun List<Loan>.toLoanExchange() = this.map { it.toLoanExchange() }

@@ -7,6 +7,7 @@ import com.example.library.exception.BookIsNotAvailableException
 import com.example.library.exception.BookIsNotBorrowedException
 import com.example.library.exception.UserReachedLoanLimitException
 import com.example.library.repository.LoanRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -46,7 +47,7 @@ class LoanService(val loanRepository: LoanRepository,
                 user = userService.findById(userId),
                 book = bookService.findById(bookId),
                 issuedDate = LocalDate.now(),
-                loanedUntil = LocalDate.now().plusDays(loanPeriod.toLong()),
+                dueDate = LocalDate.now().plusDays(loanPeriod.toLong()),
                 returnedDate = null
         )
 
@@ -62,19 +63,16 @@ class LoanService(val loanRepository: LoanRepository,
         return loanRepository.save(loan)
     }
 
-    fun computeFine(loan: Loan): Fine {
-        val fine = Fine()
-        val overdueDays = ChronoUnit.DAYS.between(loan.loanedUntil, LocalDate.now())
+    fun computeFine(loan: Loan): Fine? {
+        val overdueDays = ChronoUnit.DAYS.between(loan.dueDate, LocalDate.now())
 
         if (overdueDays > 0) {
-            fine.fineValue = overdueDays * finePerDay
-            fine.fineStatus = FineStatus.OPENED
-        }
-        else {
-            fine.fineStatus = FineStatus.NOT_CHARGED
+            return Fine(overdueDays * finePerDay, FineStatus.OPENED)
         }
 
-        return fine
+        return null
     }
+
+    fun findUserLoans(userId: String) = userService.findById(userId).loans
 
 }

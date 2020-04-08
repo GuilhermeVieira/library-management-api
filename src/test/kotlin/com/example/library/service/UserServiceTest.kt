@@ -67,6 +67,5 @@ class UserServiceTest: ShouldSpec() {
 
             result shouldBe false
         }
-
     }
 }

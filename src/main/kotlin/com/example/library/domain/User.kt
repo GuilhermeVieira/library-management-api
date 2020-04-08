@@ -1,5 +1,6 @@
 package com.example.library.domain
 
+import com.fasterxml.jackson.annotation.JsonManagedReference
 import java.util.*
 import javax.persistence.*
 
@@ -11,5 +12,6 @@ data class User(
         val name: String,
         val documentId: String,
         @OneToMany(mappedBy = "user")
-        val loans: MutableList<Loan> = mutableListOf()
+        @JsonManagedReference
+        var loans: MutableList<Loan> = mutableListOf()
 )

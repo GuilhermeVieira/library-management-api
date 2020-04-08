@@ -1,9 +1,8 @@
 package com.example.library.rest
 
-import com.example.library.domain.FineStatus
 import org.junit.jupiter.api.Test
-
 import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -17,14 +16,14 @@ class LoanControllerTest: BaseControllerTest() {
         val bookResponse = createBook()
 
         mockMvc.perform(post("/loans")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(buildLoanRequest(userResponse.id!!, bookResponse.id!!))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(buildLoanRequest(userResponse.id!!, bookResponse.id!!))))
                 .andExpect(status().isCreated)
                 .andExpect(jsonPath("id").isNotEmpty)
                 .andExpect(jsonPath("user_id").value(userResponse.id!!))
                 .andExpect(jsonPath("book_id").value(bookResponse.id!!))
                 .andExpect(jsonPath("issued_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("loaned_until").value(LocalDate.now().plusDays(loanService.loanPeriod.toLong()).toString()))
+                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(loanService.loanPeriod.toLong()).toString()))
                 .andExpect(jsonPath("returned_date").doesNotExist())
     }
 
@@ -35,12 +34,11 @@ class LoanControllerTest: BaseControllerTest() {
         val loanResponse = createLoan(userResponse.id!!, bookResponse.id!!)
 
         mockMvc.perform(post("/loans/${bookResponse.id}")
-                    .contentType(MediaType.APPLICATION_JSON))
+                .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("id").value(loanResponse.id!!))
                 .andExpect(jsonPath("returned_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("$.fine.fine_value").value(0.0))
-                .andExpect(jsonPath("$.fine.fine_status").value(FineStatus.NOT_CHARGED.toString()))
+                .andExpect(jsonPath("$.fine").doesNotExist())
     }
 
     @Test
@@ -60,8 +58,8 @@ class LoanControllerTest: BaseControllerTest() {
         returnBook(bookResponse.id!!)
 
         mockMvc.perform(post("/loans")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(buildLoanRequest(otherUserResponse.id!!, bookResponse.id!!))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(buildLoanRequest(otherUserResponse.id!!, bookResponse.id!!))))
                 .andExpect(status().isCreated)
     }
 
@@ -73,9 +71,37 @@ class LoanControllerTest: BaseControllerTest() {
         createLoan(userResponse.id!!, bookResponse.id!!)
 
         mockMvc.perform(post("/loans")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(buildLoanRequest(otherUserResponse.id!!, bookResponse.id!!))))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(buildLoanRequest(otherUserResponse.id!!, bookResponse.id!!))))
                 .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should return user loans`() {
+        val userResponse = createUser("8965221")
+        val bookResponse = createBook()
+        createLoan(userResponse.id!!, bookResponse.id!!)
+
+        mockMvc.perform(get("/loans/users/${userResponse.id}"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$.[0].id").isNotEmpty)
+                .andExpect(jsonPath("$.[0].user_id").value(userResponse.id!!))
+                .andExpect(jsonPath("$.[0].book_id").value(bookResponse.id!!))
+    }
+
+    @Test
+    fun `should return an empty list as user loans`() {
+        val userResponse = createUser("8965222")
+
+        mockMvc.perform(get("/loans/users/${userResponse.id}"))
+                .andExpect(status().isOk)
+                .andExpect(jsonPath("$").isEmpty)
+    }
+
+    @Test
+    fun `should not return user loans because user does not exist`() {
+        mockMvc.perform(get("/loans/users/notExistingUser8932"))
+                .andExpect(status().isNotFound)
     }
 
 }
