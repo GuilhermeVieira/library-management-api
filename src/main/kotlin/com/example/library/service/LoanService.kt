@@ -55,21 +55,16 @@ class LoanService(val loanRepository: LoanRepository,
         return loanRepository.save(createLoanEntity(userId, bookId))
     }
 
-    fun returnBook(bookId: String): Loan {
-        val loan = findBookCurrentLoan(bookId) ?: throw BookIsNotBorrowedException()
-        loan.returnedDate = LocalDate.now()
-        loan.fine = computeFine(loan)
-        return loanRepository.save(loan)
-    }
+    fun returnBook(bookId: String) =
+            findBookCurrentLoan(bookId)?.let { close(it) } ?:  throw BookIsNotBorrowedException()
 
-    fun computeFine(loan: Loan): Fine? {
+    fun close(loan: Loan): Loan {
         val overdueDays = ChronoUnit.DAYS.between(loan.dueDate, LocalDate.now())
-
-        if (overdueDays > 0) {
-            return Fine(overdueDays * finePerDay, FineStatus.OPENED)
+        loan.apply {
+            returnedDate = LocalDate.now()
+            fine = takeIf { overdueDays > 0 }?. let { Fine(overdueDays * finePerDay, FineStatus.OPENED) }
         }
-
-        return null
+        return loanRepository.save(loan)
     }
 
     fun findUserLoans(userId: String) = userService.findById(userId).loans

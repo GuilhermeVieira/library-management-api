@@ -130,14 +130,13 @@ class LoanServiceTest: ShouldSpec() {
             shouldThrow<BookIsNotAvailableException> { loanService.create(user.id, book.id) }
         }
 
-        should("return book with no fine") {
+        should("return book") {
             every { loanService.findBookCurrentLoan(book.id) } returns loan
-            every { loanRepository.save(loan) } returns loan
+            every { loanService.close(loan) } returns loan
 
             val result = loanService.returnBook(book.id)
 
-            result.returnedDate shouldBe LocalDate.now()
-            result.fine shouldBe null
+            result shouldBe loan
         }
 
         should("not return book because it is already returned") {
@@ -146,47 +145,41 @@ class LoanServiceTest: ShouldSpec() {
             shouldThrow<BookIsNotBorrowedException> { loanService.returnBook(book.id) }
         }
 
-        should("return book with fine") {
-            val fine = Fine(2.0, FineStatus.OPENED)
-            every { loanService.findBookCurrentLoan(book.id) } returns loan
-            every { loanService.computeFine(loan) } returns fine
-            every { loanRepository.save(loan) } returns loan
 
-            val result = loanService.returnBook(book.id)
+        should("return null as fine because user delivered book before the due date") {
+            val onTimeLoan = spyk<Loan>()
+            every { onTimeLoan.dueDate } returns LocalDate.now().plusDays(1)
+            every { loanRepository.save(onTimeLoan) } returns onTimeLoan
+
+            val result = loanService.close(onTimeLoan)
 
             result.returnedDate shouldBe LocalDate.now()
-            result.fine?.value shouldBe 2.0
-            result.fine?.status shouldBe FineStatus.OPENED
+            result.fine shouldBe null
         }
 
-        should("return 0.0 as fine because user delivered book before the due date") {
-            val onTimeLoan = mockk<Loan>()
-            every { onTimeLoan.dueDate } returns LocalDate.now().plusDays(1)
-
-            val result = loanService.computeFine(onTimeLoan)
-
-            result shouldBe null
-        }
-
-        should("return 0.0 as fine because user delivered book in the loanedUntil date") {
-            val onTimeLoan = mockk<Loan>()
+        should("return null as fine because user delivered book in the loanedUntil date") {
+            val onTimeLoan = spyk<Loan>()
             every { onTimeLoan.dueDate } returns LocalDate.now()
+            every { loanRepository.save(onTimeLoan) } returns onTimeLoan
 
-            val result = loanService.computeFine(onTimeLoan)
+            val result = loanService.close(onTimeLoan)
 
-            result shouldBe null
+            result.returnedDate shouldBe LocalDate.now()
+            result.fine shouldBe null
         }
 
         should("return a fine because user delayed one day") {
-            val onTimeLoan = mockk<Loan>()
+            val overdueLoan = spyk<Loan>()
 
             for (delayedDays in 1..60) {
-                every { onTimeLoan.dueDate } returns LocalDate.now().minusDays(delayedDays.toLong())
+                every { overdueLoan.dueDate } returns LocalDate.now().minusDays(delayedDays.toLong())
+                every { loanRepository.save(overdueLoan) } returns overdueLoan
 
-                val result = loanService.computeFine(onTimeLoan)
+                val result = loanService.close(overdueLoan)
 
-                result?.value shouldBe delayedDays * loanService.finePerDay
-                result?.status shouldBe FineStatus.OPENED
+                result.returnedDate shouldBe LocalDate.now()
+                result.fine?.value shouldBe delayedDays * loanService.finePerDay
+                result.fine?.status shouldBe FineStatus.OPENED
             }
         }
 
