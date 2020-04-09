@@ -23,40 +23,35 @@ class UserControllerTest: BaseControllerTest() {
 
     @Test
     fun `should not create user because it already exists`() {
-        val id = "789652"
+        val user = generateCreatedUser()
         mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(buildUserRequest(id = id))))
-                .andExpect(status().isCreated)
-
-        mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(buildUserRequest(id = id))))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(buildUserRequest(id = user.documentId))))
                 .andExpect(status().isBadRequest)
     }
 
     @Test
     fun `should create both users with different documentId's`() {
         mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(buildUserRequest(id = "8965241"))))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(buildUserRequest(id = "8965241"))))
                 .andExpect(status().isCreated)
 
         mockMvc.perform(post("/users")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(buildUserRequest(id = "8796521"))))
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(buildUserRequest(id = "8796521"))))
                 .andExpect(status().isCreated)
     }
 
     @Test
     fun `should find user`() {
-        val userResponse = createUser(id = "2563148598")
-        mockMvc.perform(get("/users/${userResponse.id}")
+        val user = generateCreatedUser()
+        mockMvc.perform(get("/users/${user.id}")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("id").value(userResponse.id!!))
-                .andExpect(jsonPath("name").value(userResponse.name))
-                .andExpect(jsonPath("document_id").value(userResponse.documentId))
+                .andExpect(jsonPath("id").value(user.id))
+                .andExpect(jsonPath("name").value(user.name))
+                .andExpect(jsonPath("document_id").value(user.documentId))
     }
 
     @Test

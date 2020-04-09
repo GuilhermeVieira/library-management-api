@@ -7,7 +7,6 @@ import com.example.library.exception.BookIsNotAvailableException
 import com.example.library.exception.BookIsNotBorrowedException
 import com.example.library.exception.UserReachedLoanLimitException
 import com.example.library.repository.LoanRepository
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit

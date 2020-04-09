@@ -23,13 +23,13 @@ class BookControllerTest: BaseControllerTest() {
 
     @Test
     fun `should find book`() {
-        val bookResponse = createBook()
-        mockMvc.perform(get("/books/${bookResponse.id}")
+        val book = generateCreatedBook()
+        mockMvc.perform(get("/books/${book.id}")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk)
-                .andExpect(jsonPath("id").value(bookResponse.id!!))
-                .andExpect(jsonPath("title").value(bookResponse.title))
-                .andExpect(jsonPath("author").value(bookResponse.author))
+                .andExpect(jsonPath("id").value(book.id))
+                .andExpect(jsonPath("title").value(book.title))
+                .andExpect(jsonPath("author").value(book.author))
     }
 
     @Test
