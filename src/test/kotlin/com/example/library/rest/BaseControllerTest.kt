@@ -1,8 +1,6 @@
 package com.example.library.rest
 
-import com.example.library.domain.Book
-import com.example.library.domain.Loan
-import com.example.library.domain.User
+import com.example.library.domain.*
 import com.example.library.repository.BookRepository
 import com.example.library.repository.LoanRepository
 import com.example.library.repository.UserRepository
@@ -17,9 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import java.time.LocalDate
 import java.util.*
 
@@ -76,8 +72,8 @@ abstract class BaseControllerTest {
         )
     }
 
-    fun createBaseLoan(user: User,
-                       book: Book,
+    fun createBaseLoan(user: User = generateCreatedUser(),
+                       book: Book = generateCreatedBook(),
                        issuedDate: LocalDate = LocalDate.now(),
                        dueDate: LocalDate = issuedDate.plusDays(loanService.loanPeriod.toLong()),
                        returnedDate: LocalDate? = null) =
@@ -98,15 +94,20 @@ abstract class BaseControllerTest {
         saveLoan(createBaseLoan(this, book))
     }
 
+    fun Loan.close(applyFine: Boolean = false, fineValue: Double = 30.0, paid: Boolean = false) =
+            this.apply {
+                returnedDate = LocalDate.now()
+                fine = takeIf {
+                    applyFine
+                }?.let {
+                    Fine(fineValue, takeIf { paid }?.let { FineStatus.PAID } ?: FineStatus.OPENED)
+                }
+            }
+
     fun saveUser(user: User) = userRepository.save(user)
 
     fun saveBook(book: Book) = bookRepository.save(book)
 
     fun saveLoan(loan: Loan) = loanRepository.save(loan)
-
-    fun returnBook(bookId: String) {
-        mockMvc.perform(post("/loans/${bookId}")
-                .contentType(MediaType.APPLICATION_JSON))
-    }
 
 }

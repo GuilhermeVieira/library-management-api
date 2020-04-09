@@ -1,7 +1,6 @@
 package com.example.library.rest
 
 import com.example.library.domain.FineStatus
-import com.example.library.rest.exchange.toBookExchange
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -143,12 +142,14 @@ class LoanControllerTest: BaseControllerTest() {
     }
 
     @Test
-    fun `should return book and loan it again to another user`() {
+    fun `should loan returned book`() {
         val user = generateCreatedUser()
         val otherUser = generateCreatedUser()
         val book = generateCreatedBook()
-        saveLoan(createBaseLoan(user, book))
-        returnBook(book.toBookExchange().id!!)
+        val loan = saveLoan(createBaseLoan(user, book))
+        saveLoan(loan.apply {
+            returnedDate = LocalDate.now()
+        })
 
         mockMvc.perform(post("/loans")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -193,6 +194,42 @@ class LoanControllerTest: BaseControllerTest() {
     fun `should not return user loans because user does not exist`() {
         mockMvc.perform(get("/loans/users/notExistingUser8932"))
                 .andExpect(status().isNotFound)
+    }
+
+    @Test
+    fun `should pay fine`() {
+        val fineValue = 40.0
+        val loan = saveLoan(createBaseLoan().close(applyFine = true, fineValue = fineValue))
+
+        mockMvc.perform(post("/loans/payments/${loan.id}")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("id").value(loan.id))
+                .andExpect(jsonPath("fine.value").value(fineValue))
+                .andExpect(jsonPath("fine.status").value(FineStatus.PAID.toString()))
+    }
+
+    @Test
+    fun `should not pay fine because loan was not closed`() {
+        val loan = saveLoan(createBaseLoan())
+        mockMvc.perform(post("/loans/payments/${loan.id}")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should not pay fine because loan fine has no fine`() {
+        val loan = saveLoan(createBaseLoan().close(applyFine = false))
+        mockMvc.perform(post("/loans/payments/${loan.id}")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest)
+    }
+
+    @Test
+    fun `should not pay fine because fine is already paid`() {
+        val loan = saveLoan(createBaseLoan().close(applyFine = false, paid = true))
+        mockMvc.perform(post("/loans/payments/${loan.id}")
+                    .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest)
     }
 
 }

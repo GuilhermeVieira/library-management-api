@@ -3,10 +3,9 @@ package com.example.library.service
 import com.example.library.domain.Fine
 import com.example.library.domain.FineStatus
 import com.example.library.domain.Loan
-import com.example.library.exception.BookIsNotAvailableException
-import com.example.library.exception.BookIsNotBorrowedException
-import com.example.library.exception.UserReachedLoanLimitException
+import com.example.library.exception.*
 import com.example.library.repository.LoanRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -21,6 +20,8 @@ class LoanService(val loanRepository: LoanRepository,
     val loanPeriod = 15
 
     private fun canLoanBook(userId: String) = userService.canLoanBook(userId)
+
+    fun findById(id: String) = loanRepository.findByIdOrNull(id) ?: throw LoanNotFoundException()
 
     fun findBookLoans(bookId: String) = bookService.findById(bookId).loans
 
@@ -42,13 +43,13 @@ class LoanService(val loanRepository: LoanRepository,
     }
 
     fun createLoanEntity(userId: String, bookId: String) =
-        Loan(
-                user = userService.findById(userId),
-                book = bookService.findById(bookId),
-                issuedDate = LocalDate.now(),
-                dueDate = LocalDate.now().plusDays(loanPeriod.toLong()),
-                returnedDate = null
-        )
+            Loan(
+                    user = userService.findById(userId),
+                    book = bookService.findById(bookId),
+                    issuedDate = LocalDate.now(),
+                    dueDate = LocalDate.now().plusDays(loanPeriod.toLong()),
+                    returnedDate = null
+            )
 
     fun create(userId: String, bookId: String): Loan {
         validateLoan(userId, bookId)
@@ -56,17 +57,29 @@ class LoanService(val loanRepository: LoanRepository,
     }
 
     fun returnBook(bookId: String) =
-            findBookCurrentLoan(bookId)?.let { close(it) } ?:  throw BookIsNotBorrowedException()
+            findBookCurrentLoan(bookId)?.let { close(it) } ?: throw BookIsNotBorrowedException()
 
     fun close(loan: Loan): Loan {
         val overdueDays = ChronoUnit.DAYS.between(loan.dueDate, LocalDate.now())
         loan.apply {
             returnedDate = LocalDate.now()
-            fine = takeIf { overdueDays > 0 }?. let { Fine(overdueDays * finePerDay, FineStatus.OPENED) }
+            fine = takeIf { overdueDays > 0 }?.let { Fine(overdueDays * finePerDay, FineStatus.OPENED) }
         }
         return loanRepository.save(loan)
     }
 
     fun findUserLoans(userId: String) = userService.findById(userId).loans
 
+    private fun isClosed(loan: Loan) = (loan.returnedDate != null)
+
+    private fun hasFine(loan: Loan) = (loan.fine?.status == FineStatus.OPENED)
+
+    private fun isFineOpened(loan: Loan) = (isClosed(loan) && hasFine(loan))
+
+    fun payFine(loanId: String) =
+            findById(loanId).takeIf {
+                isFineOpened(it)
+            }?.let {
+                loanRepository.save(it.apply { fine?.status = FineStatus.PAID })
+            } ?: throw CouldNotPayFineException()
 }

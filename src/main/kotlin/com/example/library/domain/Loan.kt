@@ -21,7 +21,7 @@ data class Loan(
 @Embeddable
 data class Fine(
         val value: Double?,
-        val status: FineStatus?
+        var status: FineStatus?
 )
 
 enum class FineStatus {

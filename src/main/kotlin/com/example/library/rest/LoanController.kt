@@ -23,4 +23,8 @@ class LoanController(val loanService: LoanService) {
     fun findUserLoans(@PathVariable userId: String) =
             loanService.findUserLoans(userId).toLoanExchange()
 
+    @PostMapping("/payments/{loanId}")
+    fun payFine(@PathVariable loanId: String) =
+            loanService.payFine(loanId).toLoanExchange()
+
 }

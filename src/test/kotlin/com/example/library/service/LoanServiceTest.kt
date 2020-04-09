@@ -1,9 +1,7 @@
 package com.example.library.service
 
 import com.example.library.domain.*
-import com.example.library.exception.BookIsNotAvailableException
-import com.example.library.exception.BookIsNotBorrowedException
-import com.example.library.exception.UserReachedLoanLimitException
+import com.example.library.exception.*
 import com.example.library.repository.LoanRepository
 import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
@@ -13,6 +11,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkObject
 import io.mockk.spyk
+import org.springframework.data.repository.findByIdOrNull
 import java.time.LocalDate
 
 class LoanServiceTest: ShouldSpec() {
@@ -50,6 +49,21 @@ class LoanServiceTest: ShouldSpec() {
     )
 
     init {
+
+        should("find loan") {
+            every { loanRepository.findByIdOrNull(loan.id) } returns loan
+
+            val result = loanService.findById(loan.id)
+
+            result shouldBe loan
+        }
+
+        should("not find loan") {
+            every { loanRepository.findByIdOrNull(loan.id) } returns null
+
+            shouldThrow<LoanNotFoundException> { loanService.findById(loan.id) }
+        }
+
         should("get book loans") {
             every { bookService.findById(book.id) } returns book
 
@@ -193,5 +207,41 @@ class LoanServiceTest: ShouldSpec() {
             result shouldBe mutableListOf(loan)
         }
 
+        should("pay fine") {
+            val overdueLoan = spyk<Loan>()
+            every { overdueLoan.id } returns loan.id
+            every { loanService.findById(loan.id) } returns overdueLoan
+            every { overdueLoan.returnedDate } returns LocalDate.now()
+            every { overdueLoan.fine } returns Fine(4.0, FineStatus.OPENED)
+            every { loanRepository.save(overdueLoan) } returns overdueLoan
+
+            val result = loanService.payFine(overdueLoan.id)
+
+            result.fine?.status shouldBe FineStatus.PAID
+        }
+
+        should("not pay fine because loan was not closed yet") {
+            every { loanService.findById(loan.id) } returns loan
+
+            shouldThrow<CouldNotPayFineException> { loanService.payFine(loan.id) }
+        }
+
+        should("not pay fine because loan has no fine") {
+            val overdueLoan = spyk<Loan>()
+            every { loanService.findById(loan.id) } returns overdueLoan
+            every { overdueLoan.returnedDate } returns LocalDate.now()
+            every { overdueLoan.fine } returns null
+
+            shouldThrow<CouldNotPayFineException> { loanService.payFine(loan.id) }
+        }
+
+        should("not pay fine because loan fine is already paid") {
+            val overdueLoan = spyk<Loan>()
+            every { loanService.findById(loan.id) } returns overdueLoan
+            every { overdueLoan.returnedDate } returns LocalDate.now()
+            every { overdueLoan.fine } returns Fine(4.0, FineStatus.PAID)
+
+            shouldThrow<CouldNotPayFineException> { loanService.payFine(loan.id) }
+        }
     }
 }
