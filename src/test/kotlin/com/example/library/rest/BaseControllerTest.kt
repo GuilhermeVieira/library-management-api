@@ -9,6 +9,7 @@ import com.example.library.rest.exchange.LoanExchange
 import com.example.library.rest.exchange.UserExchange
 import com.example.library.rest.exchange.toDomain
 import com.example.library.service.BookService
+import com.example.library.service.LOAN_PERIOD
 import com.example.library.service.LoanService
 import com.example.library.service.UserService
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -75,7 +76,7 @@ abstract class BaseControllerTest {
     fun createBaseLoan(user: User = generateCreatedUser(),
                        book: Book = generateCreatedBook(),
                        issuedDate: LocalDate = LocalDate.now(),
-                       dueDate: LocalDate = issuedDate.plusDays(loanService.loanPeriod.toLong()),
+                       dueDate: LocalDate = issuedDate.plusDays(LOAN_PERIOD.toLong()),
                        returnedDate: LocalDate? = null) =
             Loan(
                     user = user,

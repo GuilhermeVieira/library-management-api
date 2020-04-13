@@ -7,10 +7,10 @@ import com.example.library.repository.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
+const val USER_LOAN_LIMIT = 10
+
 @Service
 class UserService(private val userRepository: UserRepository) {
-
-    val userLoanLimit = 10
 
     private fun userExists(user: User) =
             userRepository.findByDocumentId(user.documentId) == null
@@ -27,6 +27,6 @@ class UserService(private val userRepository: UserRepository) {
 
     fun getUserLoansSize(id: String) = findById(id).loans.size
 
-    fun canLoanBook(id: String) = getUserLoansSize(id) < userLoanLimit
+    fun canLoanBook(id: String) = getUserLoansSize(id) < USER_LOAN_LIMIT
 
 }

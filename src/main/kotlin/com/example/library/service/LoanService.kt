@@ -10,14 +10,14 @@ import org.springframework.stereotype.Service
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
+const val FINE_PER_DAY = 2.0
+const val LOAN_PERIOD = 15
+
 @Service
 class LoanService(private val loanRepository: LoanRepository,
                   private val userService: UserService,
                   private val bookService: BookService
 ) {
-
-    val finePerDay = 2.0
-    val loanPeriod = 15
 
     private fun canLoanBook(userId: String) = userService.canLoanBook(userId)
 
@@ -47,7 +47,7 @@ class LoanService(private val loanRepository: LoanRepository,
                     user = userService.findById(userId),
                     book = bookService.findById(bookId),
                     issuedDate = LocalDate.now(),
-                    dueDate = LocalDate.now().plusDays(loanPeriod.toLong()),
+                    dueDate = LocalDate.now().plusDays(LOAN_PERIOD.toLong()),
                     returnedDate = null
             )
 
@@ -63,7 +63,7 @@ class LoanService(private val loanRepository: LoanRepository,
         val overdueDays = ChronoUnit.DAYS.between(loan.dueDate, LocalDate.now())
         loan.apply {
             returnedDate = LocalDate.now()
-            fine = takeIf { overdueDays > 0 }?.let { Fine(overdueDays * finePerDay, FineStatus.OPENED) }
+            fine = takeIf { overdueDays > 0 }?.let { Fine(overdueDays * FINE_PER_DAY, FineStatus.OPENED) }
         }
         return loanRepository.save(loan)
     }

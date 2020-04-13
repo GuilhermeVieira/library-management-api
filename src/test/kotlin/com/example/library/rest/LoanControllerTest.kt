@@ -2,6 +2,9 @@ package com.example.library.rest
 
 import com.example.library.domain.FineStatus
 import com.example.library.exception.ErrorCode
+import com.example.library.service.FINE_PER_DAY
+import com.example.library.service.LOAN_PERIOD
+import com.example.library.service.USER_LOAN_LIMIT
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -25,14 +28,14 @@ class LoanControllerTest : BaseControllerTest() {
                 .andExpect(jsonPath("user_id").value(user.id))
                 .andExpect(jsonPath("book_id").value(book.id))
                 .andExpect(jsonPath("issued_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(loanService.loanPeriod.toLong()).toString()))
+                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(LOAN_PERIOD.toLong()).toString()))
                 .andExpect(jsonPath("returned_date").doesNotExist())
     }
 
     @Test
     fun `should create loan because user has not exceeded its loan limit`() {
         val user = generateCreatedUser()
-        user.generateLoans(userService.userLoanLimit - 1)
+        user.generateLoans(USER_LOAN_LIMIT - 1)
         val book = generateCreatedBook()
 
         mockMvc.perform(post("/loans")
@@ -43,14 +46,14 @@ class LoanControllerTest : BaseControllerTest() {
                 .andExpect(jsonPath("user_id").value(user.id))
                 .andExpect(jsonPath("book_id").value(book.id))
                 .andExpect(jsonPath("issued_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(loanService.loanPeriod.toLong()).toString()))
+                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(LOAN_PERIOD.toLong()).toString()))
                 .andExpect(jsonPath("returned_date").doesNotExist())
     }
 
     @Test
     fun `should not create loan because user exceeded its loan limit`() {
         val user = generateCreatedUser()
-        user.generateLoans(userService.userLoanLimit)
+        user.generateLoans(USER_LOAN_LIMIT)
         val book = generateCreatedBook()
 
         mockMvc.perform(post("/loans")
@@ -133,7 +136,7 @@ class LoanControllerTest : BaseControllerTest() {
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("id").value(loan.id))
                 .andExpect(jsonPath("returned_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("$.fine.value").value(loanService.finePerDay * overdueDays))
+                .andExpect(jsonPath("$.fine.value").value(FINE_PER_DAY * overdueDays))
                 .andExpect(jsonPath("$.fine.status").value(FineStatus.OPENED.toString()))
     }
 

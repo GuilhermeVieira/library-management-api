@@ -114,7 +114,7 @@ class LoanServiceTest : ShouldSpec() {
                 result.user shouldBe user
                 result.book shouldBe book
                 result.issuedDate shouldBe todaysDate
-                result.dueDate shouldBe todaysDate.plusDays(loanService.loanPeriod.toLong())
+                result.dueDate shouldBe todaysDate.plusDays(LOAN_PERIOD.toLong())
                 result.returnedDate shouldBe null
             }
         }
@@ -191,7 +191,7 @@ class LoanServiceTest : ShouldSpec() {
                 val result = loanService.close(overdueLoan)
 
                 result.returnedDate shouldBe LocalDate.now()
-                result.fine?.value shouldBe delayedDays * loanService.finePerDay
+                result.fine?.value shouldBe delayedDays * FINE_PER_DAY
                 result.fine?.status shouldBe FineStatus.OPENED
             }
         }
