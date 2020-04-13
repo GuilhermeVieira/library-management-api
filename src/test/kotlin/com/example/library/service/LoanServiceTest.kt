@@ -26,8 +26,7 @@ class LoanServiceTest: ShouldSpec() {
             LoanService(
                 loanRepository = loanRepository,
                 userService = userService,
-                bookService = bookService),
-            recordPrivateCalls = true
+                bookService = bookService)
     )
 
     private val user = User(
@@ -122,8 +121,8 @@ class LoanServiceTest: ShouldSpec() {
 
         should("create loan") {
             every { userService.canLoanBook(user.id) } returns true
-            every { loanService["isBookAvailable"](book.id) } returns true
-            every { loanService["createLoanEntity"](user.id, book.id) } returns loan
+            every { loanService.isBookAvailable(book.id) } returns true
+            every { loanService.createLoanEntity(user.id, book.id) } returns loan
             every { loanRepository.save(loan) } returns loan
 
             val result = loanService.create(user.id, book.id)
@@ -139,7 +138,7 @@ class LoanServiceTest: ShouldSpec() {
 
         should("not loan book because it is already borrowed") {
             every { userService.canLoanBook(user.id) } returns true
-            every { loanService["isBookAvailable"](book.id) } returns false
+            every { loanService.isBookAvailable(book.id) } returns false
 
             shouldThrow<BookIsNotAvailableException> { loanService.create(user.id, book.id) }
         }
