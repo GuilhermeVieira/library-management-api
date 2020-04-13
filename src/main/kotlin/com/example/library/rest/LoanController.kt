@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/loans")
-class LoanController(val loanService: LoanService) {
+class LoanController(private val loanService: LoanService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

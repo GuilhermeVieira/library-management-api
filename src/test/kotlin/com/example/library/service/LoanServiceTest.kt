@@ -14,7 +14,7 @@ import io.mockk.spyk
 import org.springframework.data.repository.findByIdOrNull
 import java.time.LocalDate
 
-class LoanServiceTest: ShouldSpec() {
+class LoanServiceTest : ShouldSpec() {
 
     private val loanRepository = mockk<LoanRepository>()
 

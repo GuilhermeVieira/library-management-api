@@ -11,7 +11,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.springframework.data.repository.findByIdOrNull
 
-class UserServiceTest: ShouldSpec() {
+class UserServiceTest : ShouldSpec() {
 
     private val userRepository = mockk<UserRepository>()
 

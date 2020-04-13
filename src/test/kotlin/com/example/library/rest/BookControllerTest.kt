@@ -7,7 +7,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 
-class BookControllerTest: BaseControllerTest() {
+class BookControllerTest : BaseControllerTest() {
 
     @Test
     fun `should create book`() {

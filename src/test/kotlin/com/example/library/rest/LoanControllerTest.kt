@@ -10,7 +10,7 @@ import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.time.LocalDate
 import java.util.*
 
-class LoanControllerTest: BaseControllerTest() {
+class LoanControllerTest : BaseControllerTest() {
 
     @Test
     fun `should create loan`() {

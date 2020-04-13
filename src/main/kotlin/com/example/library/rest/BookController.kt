@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*
 
 @RequestMapping("/books")
 @RestController
-class BookController(val bookService: BookService) {
+class BookController(private val bookService: BookService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

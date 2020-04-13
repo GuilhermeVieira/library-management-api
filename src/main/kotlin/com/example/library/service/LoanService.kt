@@ -11,9 +11,9 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 @Service
-class LoanService(val loanRepository: LoanRepository,
-                  val userService: UserService,
-                  val bookService: BookService
+class LoanService(private val loanRepository: LoanRepository,
+                  private val userService: UserService,
+                  private val bookService: BookService
 ) {
 
     val finePerDay = 2.0

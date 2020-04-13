@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/users")
-class UserController(val userService: UserService) {
+class UserController(private val userService: UserService) {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

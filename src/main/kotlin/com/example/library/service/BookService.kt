@@ -7,7 +7,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
 @Service
-class BookService(val bookRepository: BookRepository) {
+class BookService(private val bookRepository: BookRepository) {
 
     fun create(book: Book) = bookRepository.save(book)
 

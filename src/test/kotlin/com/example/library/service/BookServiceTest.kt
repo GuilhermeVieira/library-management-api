@@ -10,7 +10,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.springframework.data.repository.findByIdOrNull
 
-class BookServiceTest: ShouldSpec() {
+class BookServiceTest : ShouldSpec() {
 
     private val bookRepository = mockk<BookRepository>()
 
