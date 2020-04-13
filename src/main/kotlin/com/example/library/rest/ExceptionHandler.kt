@@ -1,6 +1,7 @@
 package com.example.library.rest
 
 import com.example.library.exception.BadRequestException
+import com.example.library.exception.ForbiddenException
 import com.example.library.exception.NotFoundException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -22,6 +23,10 @@ class ExceptionHandler {
     @ExceptionHandler(NotFoundException::class)
     fun handleNotFoundException(exception: NotFoundException, request: HttpServletRequest) =
             handleGenericException(exception, request, HttpStatus.NOT_FOUND)
+
+    @ExceptionHandler(ForbiddenException::class)
+    fun handleForbiddenException(exception: ForbiddenException, request: HttpServletRequest) =
+            handleGenericException(exception, request, HttpStatus.FORBIDDEN)
 
     private fun handleGenericException(exception: RuntimeException, request: HttpServletRequest, status: HttpStatus): ResponseEntity<String> {
         logException(exception, status, request)
