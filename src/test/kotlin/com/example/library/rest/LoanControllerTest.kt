@@ -1,12 +1,12 @@
 package com.example.library.rest
 
 import com.example.library.domain.FineStatus
+import com.example.library.exception.ErrorCode
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
-import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import java.time.LocalDate
 import java.util.*
 
@@ -57,6 +57,7 @@ class LoanControllerTest: BaseControllerTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(buildLoanRequest(user.id, book.id))))
                 .andExpect(status().isForbidden)
+                .andExpect(content().string(ErrorCode.USER_REACHED_LOAN_LIMIT))
     }
 
     @Test
@@ -70,7 +71,7 @@ class LoanControllerTest: BaseControllerTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(buildLoanRequest(otherUser.id, book.id))))
                 .andExpect(status().isBadRequest)
-
+                .andExpect(content().string(ErrorCode.BOOK_IS_ALREADY_BORROWED))
     }
 
     @Test
@@ -80,6 +81,7 @@ class LoanControllerTest: BaseControllerTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(buildLoanRequest(UUID.randomUUID().toString(), book.id))))
                 .andExpect(status().isNotFound)
+                .andExpect(content().string(ErrorCode.USER_NOT_FOUND))
     }
 
     @Test
@@ -89,6 +91,7 @@ class LoanControllerTest: BaseControllerTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(buildLoanRequest(user.id, UUID.randomUUID().toString()))))
                 .andExpect(status().isNotFound)
+                .andExpect(content().string(ErrorCode.BOOK_NOT_FOUND))
     }
 
     @Test
@@ -101,6 +104,7 @@ class LoanControllerTest: BaseControllerTest() {
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(buildLoanRequest(user.id, book.id))))
                 .andExpect(status().isBadRequest)
+                .andExpect(content().string(ErrorCode.BOOK_IS_ALREADY_BORROWED))
     }
 
     @Test
@@ -139,6 +143,7 @@ class LoanControllerTest: BaseControllerTest() {
         mockMvc.perform(post("/loans/${book.id}")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest)
+                .andExpect(content().string(ErrorCode.BOOK_IS_NOT_BORROWED))
     }
 
     @Test
@@ -194,6 +199,7 @@ class LoanControllerTest: BaseControllerTest() {
     fun `should not return user loans because user does not exist`() {
         mockMvc.perform(get("/loans/users/notExistingUser8932"))
                 .andExpect(status().isNotFound)
+                .andExpect(content().string(ErrorCode.USER_NOT_FOUND))
     }
 
     @Test
@@ -214,6 +220,7 @@ class LoanControllerTest: BaseControllerTest() {
         mockMvc.perform(post("/loans/payments/${loan.id}")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest)
+                .andExpect(content().string(ErrorCode.COULD_NOT_PAY_FINE))
     }
 
     @Test
@@ -222,6 +229,7 @@ class LoanControllerTest: BaseControllerTest() {
         mockMvc.perform(post("/loans/payments/${loan.id}")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest)
+                .andExpect(content().string(ErrorCode.COULD_NOT_PAY_FINE))
     }
 
     @Test
@@ -230,6 +238,7 @@ class LoanControllerTest: BaseControllerTest() {
         mockMvc.perform(post("/loans/payments/${loan.id}")
                     .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isBadRequest)
+                .andExpect(content().string(ErrorCode.COULD_NOT_PAY_FINE))
     }
 
 }

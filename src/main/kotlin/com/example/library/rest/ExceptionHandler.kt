@@ -41,11 +41,7 @@ class ExceptionHandler {
     }
 
     private fun logException(exception: Throwable, status: HttpStatus, request: HttpServletRequest) {
-        logger.warn("Returning HTTP " + status.toString() +
-                    " caused by a " + request.method.toString() +
-                    " request at " + request.requestURI.toString() +
-                    " with error message:  " + exception.message
-        )
+        logger.warn("Returning HTTP $status caused by a ${request.method} request at ${request.requestURI} with error message: ${exception.message}")
     }
 
 }
