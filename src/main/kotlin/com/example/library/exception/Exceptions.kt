@@ -6,7 +6,7 @@ class UserNotFoundException(override val message: String = ErrorCode.USER_NOT_FO
 
 class UserAlreadyExistsException(override val message: String = ErrorCode.USER_ALREADY_EXISTS): BadRequestException()
 
-class UserReachedLoanLimitException(override val message: String = ErrorCode.USER_REACHED_LOAN_LIMIT): ForbiddenException()
+class UserReachedLoanLimitException(override val message: String = ErrorCode.USER_REACHED_LOAN_LIMIT): BadRequestException()
 
 class BookNotFoundException(override val message: String = ErrorCode.BOOK_NOT_FOUND): NotFoundException()
 
@@ -21,8 +21,6 @@ class CouldNotPayFineException(override val message: String = ErrorCode.COULD_NO
 open class BadRequestException: RuntimeException()
 
 open class NotFoundException: RuntimeException()
-
-open class ForbiddenException: RuntimeException()
 
 object ErrorCode {
     const val USER_NOT_FOUND = "User not found"

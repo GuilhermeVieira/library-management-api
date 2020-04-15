@@ -57,7 +57,7 @@ class LoanControllerTest : BaseControllerTest() {
         mockMvc.perform(post("/loans")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content(objectMapper.writeValueAsString(buildLoanRequest(user.id, book.id))))
-                .andExpect(status().isForbidden)
+                .andExpect(status().isBadRequest)
                 .andExpect(content().string(ErrorCode.USER_REACHED_LOAN_LIMIT))
     }
 
