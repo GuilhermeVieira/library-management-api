@@ -1,0 +1,15 @@
+spring:
+  jackson:
+    default-property-inclusion: non_null
+    property-naming-strategy: SNAKE_CASE
+  h2:
+    console:
+      enabled: true
+  datasource:
+    driver-class-name: org.h2.Driver
+  jpa:
+    generate-ddl: true
+
+logging:
+  level:
+    com.example.library: DEBUG
