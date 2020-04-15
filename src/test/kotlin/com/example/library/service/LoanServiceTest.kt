@@ -3,14 +3,11 @@ package com.example.library.service
 import com.example.library.domain.*
 import com.example.library.exception.*
 import com.example.library.repository.LoanRepository
-import io.kotlintest.assertSoftly
 import io.kotlintest.shouldBe
 import io.kotlintest.shouldThrow
 import io.kotlintest.specs.ShouldSpec
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.spyk
 import org.springframework.data.repository.findByIdOrNull
 import java.time.LocalDate
 
@@ -22,112 +19,35 @@ class LoanServiceTest : ShouldSpec() {
 
     private val bookService = mockk<BookService>()
 
-    private val loanService = spyk<LoanService>(
-            LoanService(
+    private val loanService = LoanService(
                 loanRepository = loanRepository,
                 userService = userService,
-                bookService = bookService)
+                bookService = bookService
     )
 
-    private val user = User(
-            name = "Bob",
-            documentId = "7896521"
-    )
+    private val user = buildUser()
 
-    private val book = Book(
-            title = "Clean Code",
-            author = "Uncle Bob"
-    )
+    private val book = buildBook()
 
-    private val loan = Loan(
-            user = user,
-            book = book,
-            issuedDate = LocalDate.now(),
-            dueDate = LocalDate.now(),
-            returnedDate = null
-    )
+    private val loan = buildLoan()
 
     init {
 
-        should("find loan") {
-            every { loanRepository.findByIdOrNull(loan.id) } returns loan
-
-            val result = loanService.findById(loan.id)
-
-            result shouldBe loan
-        }
-
-        should("not find loan") {
-            every { loanRepository.findByIdOrNull(loan.id) } returns null
-
-            shouldThrow<LoanNotFoundException> { loanService.findById(loan.id) }
-        }
-
-        should("get book loans") {
-            every { bookService.findById(book.id) } returns book
-
-            val result = loanService.findBookLoans(book.id)
-
-            result shouldBe book.loans
-        }
-
-        should("return the current loan") {
-            every { loanService.findBookLoans(book.id) } returns mutableListOf(loan)
-
-            val result = loanService.findBookCurrentLoan(book.id)
-
-            result shouldBe loan
-        }
-
-        should("return null because book is not currently loaned") {
-            every { loanService.findBookLoans(book.id) } returns mutableListOf()
-
-            val result = loanService.findBookCurrentLoan(book.id)
-
-            result shouldBe null
-        }
-
-        should("return true because book is available") {
-            every { loanService.findBookCurrentLoan(book.id) } returns null
-
-            val result = loanService.isBookAvailable(book.id)
-
-            result shouldBe true
-        }
-
-        should("return false because book is currently borrowed") {
-            every { loanService.findBookCurrentLoan(book.id) } returns loan
-
-            val result = loanService.isBookAvailable(book.id)
-
-            result shouldBe false
-        }
-
-        should("create loan entity") {
-            every { userService.findById(user.id) } returns user
-            every { bookService.findById(book.id) } returns book
-
-            val todaysDate = LocalDate.now()
-            val result = loanService.createLoanEntity(user.id, book.id)
-
-            assertSoftly {
-                result.user shouldBe user
-                result.book shouldBe book
-                result.issuedDate shouldBe todaysDate
-                result.dueDate shouldBe todaysDate.plusDays(LOAN_PERIOD.toLong())
-                result.returnedDate shouldBe null
-            }
-        }
-
         should("create loan") {
+            val todaysDate = LocalDate.now()
             every { userService.canLoanBook(user.id) } returns true
-            every { loanService.isBookAvailable(book.id) } returns true
-            every { loanService.createLoanEntity(user.id, book.id) } returns loan
-            every { loanRepository.save(loan) } returns loan
+            every { bookService.findById(book.id).loans } returns mutableListOf(loan)
+            every { bookService.findById(book.id) } returns book
+            every { userService.findById(user.id) } returns user
+            every { loanRepository.save(any<Loan>()) } answers { firstArg() }
 
             val result = loanService.create(user.id, book.id)
 
-            result shouldBe loan
+            result.user shouldBe user
+            result.book shouldBe book
+            result.issuedDate shouldBe todaysDate
+            result.dueDate shouldBe todaysDate.plusDays(LOAN_PERIOD_IN_DAYS.toLong())
+            result.returnedDate shouldBe null
         }
 
         should("not create loan because of limit of loans") {
@@ -138,14 +58,31 @@ class LoanServiceTest : ShouldSpec() {
 
         should("not loan book because it is already borrowed") {
             every { userService.canLoanBook(user.id) } returns true
-            every { loanService.isBookAvailable(book.id) } returns false
+            every { bookService.findById(book.id).loans } returns mutableListOf(loan)
 
             shouldThrow<BookIsNotAvailableException> { loanService.create(user.id, book.id) }
         }
 
+        should("find loan") {
+            val loan = buildLoan()
+            every { loanRepository.findByIdOrNull(loan.id) } returns loan
+
+            val result = loanService.findById(loan.id)
+
+            result shouldBe loan
+        }
+
+        should("not find loan") {
+            val loan = buildLoan()
+            every { loanRepository.findByIdOrNull(loan.id) } returns null
+
+            shouldThrow<LoanNotFoundException> { loanService.findById(loan.id) }
+        }
+
         should("return book") {
-            every { loanService.findBookCurrentLoan(book.id) } returns loan
-            every { loanService.close(loan) } returns loan
+            val book = buildBook(loans = mutableListOf(loan))
+            every { bookService.findById(book.id) } returns book
+            every { loanRepository.save(loan) } returns loan
 
             val result = loanService.returnBook(book.id)
 
@@ -153,53 +90,48 @@ class LoanServiceTest : ShouldSpec() {
         }
 
         should("not return book because it is already returned") {
-            every { loanService.findBookCurrentLoan(book.id) } returns null
+            every { bookService.findById(book.id).loans } returns mutableListOf()
 
             shouldThrow<BookIsNotBorrowedException> { loanService.returnBook(book.id) }
         }
 
 
         should("return null as fine because user delivered book before the due date") {
-            val onTimeLoan = spyk<Loan>()
-            every { onTimeLoan.dueDate } returns LocalDate.now().plusDays(1)
+            val onTimeLoan = buildLoan(dueDate = LocalDate.now().plusDays(1))
             every { loanRepository.save(onTimeLoan) } returns onTimeLoan
 
-            val result = loanService.close(onTimeLoan)
+            val result = loanService.closeLoan(onTimeLoan)
 
             result.returnedDate shouldBe LocalDate.now()
             result.fine shouldBe null
         }
 
         should("return null as fine because user delivered book in the loanedUntil date") {
-            val onTimeLoan = spyk<Loan>()
-            every { onTimeLoan.dueDate } returns LocalDate.now()
+            val onTimeLoan = buildLoan()
             every { loanRepository.save(onTimeLoan) } returns onTimeLoan
 
-            val result = loanService.close(onTimeLoan)
+            val result = loanService.closeLoan(onTimeLoan)
 
             result.returnedDate shouldBe LocalDate.now()
             result.fine shouldBe null
         }
 
         should("return a fine because user delayed one day") {
-            val overdueLoan = spyk<Loan>()
-
             for (delayedDays in 1..60) {
-                every { overdueLoan.dueDate } returns LocalDate.now().minusDays(delayedDays.toLong())
+                val overdueLoan = buildLoan(dueDate = LocalDate.now().minusDays(delayedDays.toLong()))
                 every { loanRepository.save(overdueLoan) } returns overdueLoan
 
-                val result = loanService.close(overdueLoan)
+                val result = loanService.closeLoan(overdueLoan)
 
                 result.returnedDate shouldBe LocalDate.now()
-                result.fine?.value shouldBe delayedDays * FINE_PER_DAY
+                result.fine?.value shouldBe delayedDays * FINE_IN_REAL_CENTS_PER_DAY
                 result.fine?.status shouldBe FineStatus.OPENED
             }
         }
 
         should("return user loans") {
-            mockkObject(user)
+            val user = buildUser(loans = mutableListOf(loan))
             every { userService.findById(user.id) } returns user
-            every { user.loans } returns mutableListOf(loan)
 
             val result = loanService.findUserLoans(user.id)
 
@@ -207,11 +139,11 @@ class LoanServiceTest : ShouldSpec() {
         }
 
         should("pay fine") {
-            val overdueLoan = spyk<Loan>()
-            every { overdueLoan.id } returns loan.id
-            every { loanService.findById(loan.id) } returns overdueLoan
-            every { overdueLoan.returnedDate } returns LocalDate.now()
-            every { overdueLoan.fine } returns Fine(4.0, FineStatus.OPENED)
+            val overdueLoan = buildLoan(
+                    returnedDate = LocalDate.now(),
+                    fine = Fine(4.0, FineStatus.OPENED)
+            )
+            every { loanRepository.findByIdOrNull(overdueLoan.id) } returns overdueLoan
             every { loanRepository.save(overdueLoan) } returns overdueLoan
 
             val result = loanService.payFine(overdueLoan.id)
@@ -220,27 +152,54 @@ class LoanServiceTest : ShouldSpec() {
         }
 
         should("not pay fine because loan was not closed yet") {
-            every { loanService.findById(loan.id) } returns loan
+            every { loanRepository.findByIdOrNull(loan.id) } returns loan
 
             shouldThrow<CouldNotPayFineException> { loanService.payFine(loan.id) }
         }
 
         should("not pay fine because loan has no fine") {
-            val overdueLoan = spyk<Loan>()
-            every { loanService.findById(loan.id) } returns overdueLoan
-            every { overdueLoan.returnedDate } returns LocalDate.now()
-            every { overdueLoan.fine } returns null
+            val loan = buildLoan(
+                    returnedDate = LocalDate.now(),
+                    fine = null
+            )
+            every { loanRepository.findByIdOrNull(loan.id) } returns loan
 
             shouldThrow<CouldNotPayFineException> { loanService.payFine(loan.id) }
         }
 
         should("not pay fine because loan fine is already paid") {
-            val overdueLoan = spyk<Loan>()
-            every { loanService.findById(loan.id) } returns overdueLoan
-            every { overdueLoan.returnedDate } returns LocalDate.now()
-            every { overdueLoan.fine } returns Fine(4.0, FineStatus.PAID)
+            val loan = buildLoan(
+                    returnedDate = LocalDate.now(),
+                    fine = Fine(4.0, FineStatus.PAID)
+            )
+            every { loanRepository.findByIdOrNull(loan.id) } returns loan
 
             shouldThrow<CouldNotPayFineException> { loanService.payFine(loan.id) }
         }
     }
+
+    private fun buildLoan(dueDate: LocalDate = LocalDate.now(),
+                          returnedDate: LocalDate? = null,
+                          fine: Fine? = null) =
+            Loan(
+                    user = user,
+                    book = book,
+                    issuedDate = LocalDate.now(),
+                    dueDate = dueDate,
+                    returnedDate = returnedDate,
+                    fine = fine
+            )
+
+    private fun buildBook(loans: MutableList<Loan> = mutableListOf()) = Book(
+            title = "Clean Code",
+            author = "Uncle Bob",
+            loans = loans
+    )
+
+    private fun buildUser(loans: MutableList<Loan> = mutableListOf()) = User(
+            name = "Bob",
+            documentId = "7896521",
+            loans = loans
+    )
+
 }

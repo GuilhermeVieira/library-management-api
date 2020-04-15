@@ -2,9 +2,7 @@ package com.example.library.rest
 
 import com.example.library.domain.FineStatus
 import com.example.library.exception.ErrorCode
-import com.example.library.service.FINE_PER_DAY
-import com.example.library.service.LOAN_PERIOD
-import com.example.library.service.USER_LOAN_LIMIT
+import com.example.library.service.*
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
@@ -28,7 +26,7 @@ class LoanControllerTest : BaseControllerTest() {
                 .andExpect(jsonPath("user_id").value(user.id))
                 .andExpect(jsonPath("book_id").value(book.id))
                 .andExpect(jsonPath("issued_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(LOAN_PERIOD.toLong()).toString()))
+                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(LOAN_PERIOD_IN_DAYS.toLong()).toString()))
                 .andExpect(jsonPath("returned_date").doesNotExist())
     }
 
@@ -46,7 +44,7 @@ class LoanControllerTest : BaseControllerTest() {
                 .andExpect(jsonPath("user_id").value(user.id))
                 .andExpect(jsonPath("book_id").value(book.id))
                 .andExpect(jsonPath("issued_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(LOAN_PERIOD.toLong()).toString()))
+                .andExpect(jsonPath("due_date").value(LocalDate.now().plusDays(LOAN_PERIOD_IN_DAYS.toLong()).toString()))
                 .andExpect(jsonPath("returned_date").doesNotExist())
     }
 
@@ -136,7 +134,7 @@ class LoanControllerTest : BaseControllerTest() {
                 .andExpect(status().isOk)
                 .andExpect(jsonPath("id").value(loan.id))
                 .andExpect(jsonPath("returned_date").value(LocalDate.now().toString()))
-                .andExpect(jsonPath("$.fine.value").value(FINE_PER_DAY * overdueDays))
+                .andExpect(jsonPath("$.fine.value").value(FINE_IN_REAL_CENTS_PER_DAY * overdueDays))
                 .andExpect(jsonPath("$.fine.status").value(FineStatus.OPENED.toString()))
     }
 

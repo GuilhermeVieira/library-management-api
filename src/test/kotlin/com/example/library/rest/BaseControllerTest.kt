@@ -8,10 +8,7 @@ import com.example.library.rest.exchange.BookExchange
 import com.example.library.rest.exchange.LoanExchange
 import com.example.library.rest.exchange.UserExchange
 import com.example.library.rest.exchange.toDomain
-import com.example.library.service.BookService
-import com.example.library.service.LOAN_PERIOD
-import com.example.library.service.LoanService
-import com.example.library.service.UserService
+import com.example.library.service.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc
@@ -52,31 +49,16 @@ abstract class BaseControllerTest {
     @Autowired
     lateinit var loanRepository: LoanRepository
 
-    fun buildUserRequest(name: String = USER_NAME, id: String = UUID.randomUUID().toString()): UserExchange {
-        return UserExchange(
-                name = name,
-                documentId = id
-        )
-    }
+    fun buildUserRequest(name: String = USER_NAME, id: String = UUID.randomUUID().toString()) = UserExchange(name = name, documentId = id)
 
-    fun buildBookRequest(title: String = BOOK_TITLE, author: String = BOOK_AUTHOR): BookExchange {
-        return BookExchange(
-                title = title,
-                author = author
-        )
-    }
+    fun buildBookRequest(title: String = BOOK_TITLE, author: String = BOOK_AUTHOR) = BookExchange(title = title, author = author)
 
-    fun buildLoanRequest(userId: String, bookId: String): LoanExchange {
-        return LoanExchange(
-                userId = userId,
-                bookId = bookId
-        )
-    }
+    fun buildLoanRequest(userId: String, bookId: String) = LoanExchange(userId = userId, bookId = bookId)
 
     fun createBaseLoan(user: User = generateCreatedUser(),
                        book: Book = generateCreatedBook(),
                        issuedDate: LocalDate = LocalDate.now(),
-                       dueDate: LocalDate = issuedDate.plusDays(LOAN_PERIOD.toLong()),
+                       dueDate: LocalDate = issuedDate.plusDays(LOAN_PERIOD_IN_DAYS.toLong()),
                        returnedDate: LocalDate? = null) =
             Loan(
                     user = user,

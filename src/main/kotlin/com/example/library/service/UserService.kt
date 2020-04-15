@@ -12,12 +12,9 @@ const val USER_LOAN_LIMIT = 10
 @Service
 class UserService(private val userRepository: UserRepository) {
 
-    private fun userExists(user: User) =
-            userRepository.findByDocumentId(user.documentId) == null
-
     fun create(user: User) =
         takeIf {
-            userExists(user)
+            !userExists(user)
         }?.let {
             userRepository.save(user)
         } ?: throw UserAlreadyExistsException()
@@ -28,5 +25,8 @@ class UserService(private val userRepository: UserRepository) {
     fun getUserLoansSize(id: String) = findById(id).loans.size
 
     fun canLoanBook(id: String) = getUserLoansSize(id) < USER_LOAN_LIMIT
+
+    private fun userExists(user: User) =
+            userRepository.findByDocumentId(user.documentId) != null
 
 }
