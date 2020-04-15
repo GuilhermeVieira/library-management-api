@@ -19,15 +19,6 @@ class LoanService(private val loanRepository: LoanRepository,
                   private val bookService: BookService
 ) {
 
-    private  fun createLoanEntity(userId: String, bookId: String) =
-            Loan(
-                    user = userService.findById(userId),
-                    book = bookService.findById(bookId),
-                    issuedDate = LocalDate.now(),
-                    dueDate = LocalDate.now().plusDays(LOAN_PERIOD_IN_DAYS.toLong()),
-                    returnedDate = null
-            )
-
     fun create(userId: String, bookId: String): Loan {
         validateLoan(userId, bookId)
         return loanRepository.save(createLoanEntity(userId, bookId))
@@ -55,6 +46,15 @@ class LoanService(private val loanRepository: LoanRepository,
             }?.let {
                 loanRepository.save(it.apply { fine?.status = FineStatus.PAID })
             } ?: throw CouldNotPayFineException()
+
+    private  fun createLoanEntity(userId: String, bookId: String) =
+            Loan(
+                    user = userService.findById(userId),
+                    book = bookService.findById(bookId),
+                    issuedDate = LocalDate.now(),
+                    dueDate = LocalDate.now().plusDays(LOAN_PERIOD_IN_DAYS.toLong()),
+                    returnedDate = null
+            )
 
     private fun findBookLoans(bookId: String) = bookService.findById(bookId).loans
 
